@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="model.dao.PostDAO">
+
+  <insert id="insert" parameterType="model.dto.PostDTO" useGeneratedKeys="true" keyProperty="postId">
+    INSERT INTO posts (user_id, category, title, p_content)
+    VALUES (#{userId}, #{category}, #{title}, #{pContent})
+  </insert>
+
+  <select id="selectByCategory" parameterType="string" resultType="model.dto.PostDTO">
+    SELECT post_id, user_id, category, title, p_content
+    FROM posts
+    <where>
+      <if test="category != null and category != '' and category != '전체글'">
+        category = #{category}
+      </if>
+    </where>
+    ORDER BY post_id DESC
+  </select>
+
+  <select id="selectById" parameterType="int" resultType="model.dto.PostDTO">
+    SELECT post_id, user_id, category, title, p_content
+    FROM posts
+    WHERE post_id = #{postId}
+  </select>
+
+  <select id="search" parameterType="map" resultType="model.dto.PostDTO">
+    SELECT post_id, user_id, category, title, p_content
+    FROM posts
+    WHERE category = #{category}
+      AND (title LIKE CONCAT('%', #{keyword}, '%') OR p_content LIKE CONCAT('%', #{keyword}, '%'))
+    ORDER BY post_id DESC
+  </select>
+
+</mapper>
