@@ -3,36 +3,15 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="model.dao.PostDAO">
+<mapper namespace="PostMapper">
 
-  <insert id="insert" parameterType="model.dto.PostDTO" useGeneratedKeys="true" keyProperty="postId">
-    INSERT INTO posts (user_id, category, title, p_content)
-    VALUES (#{userId}, #{category}, #{title}, #{pContent})
+  <select id="selectAllPosts" resultType="model.dto.PostDTO">
+    SELECT * FROM POSTS ORDER BY CREATED_AT DESC
+  </select>
+
+  <insert id="insertPost" parameterType="model.dto.PostDTO">
+    INSERT INTO POSTS (POST_ID, USER_ID, CATEGORY, TITLE, P_CONTENT, CREATED_AT)
+    VALUES (POSTS_SEQ.NEXTVAL, #{userId}, #{category}, #{title}, #{pContent}, SYSDATE)
   </insert>
-
-  <select id="selectByCategory" parameterType="string" resultType="model.dto.PostDTO">
-    SELECT post_id, user_id, category, title, p_content
-    FROM posts
-    <where>
-      <if test="category != null and category != '' and category != '전체글'">
-        category = #{category}
-      </if>
-    </where>
-    ORDER BY post_id DESC
-  </select>
-
-  <select id="selectById" parameterType="int" resultType="model.dto.PostDTO">
-    SELECT post_id, user_id, category, title, p_content
-    FROM posts
-    WHERE post_id = #{postId}
-  </select>
-
-  <select id="search" parameterType="map" resultType="model.dto.PostDTO">
-    SELECT post_id, user_id, category, title, p_content
-    FROM posts
-    WHERE category = #{category}
-      AND (title LIKE CONCAT('%', #{keyword}, '%') OR p_content LIKE CONCAT('%', #{keyword}, '%'))
-    ORDER BY post_id DESC
-  </select>
 
 </mapper>

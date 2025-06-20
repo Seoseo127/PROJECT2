@@ -1,87 +1,35 @@
 package model.dao;
 
-import java.sql.*;
-import java.util.*;
-
+import java.util.List;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
 import model.dto.PostDTO;
+import util.DBConnection;
 
 public class PostDAO {
-    private Connection conn;
+    private SqlSessionFactory sqlSessionFactory = DBConnection.getFactory();
 
-    public PostDAO(Connection conn) {
-        this.conn = conn;
-    }
-
-    // 게시글 작성
-    public int insert(PostDTO post) throws SQLException {
-        String sql = "INSERT INTO POSTS (user_id, category, title, p_content) VALUES (?, ?, ?, ?)";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, post.getUserId());
-            ps.setString(2, post.getCategory());
-            ps.setString(3, post.getTitle());
-            ps.setString(4, post.getPContent());
-            return ps.executeUpdate();
+    public List<PostDTO> getAllPosts() {
+        try (SqlSession session = sqlSessionFactory.openSession()) {
+            return session.selectList("PostMapper.selectAllPosts");
         }
     }
 
-    // 카테고리별 게시글 목록 조회
-    public List<PostDTO> selectByCategory(String category) throws SQLException {
-        String sql = "SELECT * FROM POSTS WHERE category = ? ORDER BY post_id DESC";
-        List<PostDTO> list = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, category);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                PostDTO post = new PostDTO();
-                post.setPostId(rs.getInt("post_id"));
-                post.setUserId(rs.getString("user_id"));
-                post.setCategory(rs.getString("category"));
-                post.setTitle(rs.getString("title"));
-                post.setPContent(rs.getString("p_content"));
-                list.add(post);
-            }
+    public List<PostDTO> getPostsByCategory(String category) {
+        try (SqlSession session = sqlSessionFactory.openSession()) {
+            return session.selectList("PostMapper.selectPostsByCategory", category);
         }
-        return list;
     }
 
-    // 게시글 상세 조회
-    public PostDTO selectById(int postId) throws SQLException {
-        String sql = "SELECT * FROM POSTS WHERE post_id = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, postId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                PostDTO post = new PostDTO();
-                post.setPostId(rs.getInt("post_id"));
-                post.setUserId(rs.getString("user_id"));
-                post.setCategory(rs.getString("category"));
-                post.setTitle(rs.getString("title"));
-                post.setPContent(rs.getString("p_content"));
-                return post;
-            }
+    public List<PostDTO> searchPosts(String keyword) {
+        try (SqlSession session = sqlSessionFactory.openSession()) {
+            return session.selectList("PostMapper.searchPosts", keyword);
         }
-        return null;
     }
 
-    // 게시글 검색 (제목 또는 내용)
-    public List<PostDTO> search(String category, String keyword) throws SQLException {
-        String sql = "SELECT * FROM POSTS WHERE category = ? AND (title LIKE ? OR p_content LIKE ?) ORDER BY post_id DESC";
-        List<PostDTO> list = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, category);
-            ps.setString(2, "%" + keyword + "%");
-            ps.setString(3, "%" + keyword + "%");
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                PostDTO post = new PostDTO();
-                post.setPostId(rs.getInt("post_id"));
-                post.setUserId(rs.getString("user_id"));
-                post.setCategory(rs.getString("category"));
-                post.setTitle(rs.getString("title"));
-                post.setPContent(rs.getString("p_content"));
-                list.add(post);
-            }
+    public void insertPost(PostDTO post) {
+        try (SqlSession session = sqlSessionFactory.openSession(true)) {
+            session.insert("PostMapper.insertPost", post);
         }
-        return list;
     }
 }
