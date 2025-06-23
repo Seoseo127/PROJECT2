@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="communityMapper">
+
+  <select id="getAllPosts" resultType="model.dto.PostDTO">
+    SELECT * FROM POSTS
+    <where>
+      <if test="category != null and category != 'all'">
+        CATEGORY = #{category}
+      </if>
+      <if test="keyword != null and keyword != ''">
+        AND TITLE LIKE '%' || #{keyword} || '%'
+      </if>
+    </where>
+    ORDER BY CREATED_AT DESC
+  </select>
+
+  <select id="getPostById" resultType="model.dto.PostDTO">
+    SELECT * FROM POSTS WHERE POST_ID = #{postId}
+  </select>
+
+  <insert id="insertPost" parameterType="model.dto.PostDTO">
+    INSERT INTO POSTS (POST_ID, USER_ID, CATEGORY, TITLE, P_CONTENT, CREATED_AT)
+    VALUES (POSTS_SEQ.NEXTVAL, #{userId}, #{category}, #{title}, #{pContent}, SYSDATE)
+  </insert>
+
+  <update id="updatePost" parameterType="model.dto.PostDTO">
+    UPDATE POSTS
+    SET TITLE = #{title}, P_CONTENT = #{pContent}
+    WHERE POST_ID = #{postId}
+  </update>
+
+  <delete id="deletePost" parameterType="int">
+    DELETE FROM POSTS WHERE POST_ID = #{postId}
+  </delete>
+
+</mapper>

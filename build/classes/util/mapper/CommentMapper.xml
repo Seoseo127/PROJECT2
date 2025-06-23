@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="commentMapper">
+
+	<select id="getCommentsByPostId" resultType="model.dto.CommentDTO">
+		SELECT * FROM COMMENTS WHERE POST_ID = #{postId} ORDER BY CREATED_AT ASC
+	</select>
+
+	<insert id="addComment" parameterType="model.dto.CommentDTO">
+		INSERT INTO COMMENTS (COMMENT_ID, POST_ID, USER_ID, C_CONTENT, CREATED_AT)
+		VALUES (COMMENTS_SEQ.NEXTVAL, #{postId}, #{userId}, #{cContent},
+		SYSDATE)
+	</insert>
+
+	<update id="updateComment" parameterType="model.dto.CommentDTO">
+		UPDATE COMMENTS SET C_CONTENT = #{cContent} WHERE COMMENT_ID = #{commentId}
+	</update>
+
+	<delete id="deleteComment" parameterType="int">
+		DELETE FROM COMMENTS WHERE COMMENT_ID = #{commentId}
+	</delete>
+
+	<select id="getCommentById" resultType="model.dto.CommentDTO">
+		SELECT * FROM COMMENTS WHERE COMMENT_ID = #{commentId}
+	</select>
+
+</mapper>
