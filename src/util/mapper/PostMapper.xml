@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="postMapper">
+
+<!-- 조회수 기준 인기글 TOP 3 -->
+<select id="getTopPosts" resultType="model.dto.PostDTO">
+  <![CDATA[
+    SELECT *
+    FROM (
+      SELECT * FROM posts
+      ORDER BY view_count DESC
+    )
+    WHERE ROWNUM <= 3
+  ]]>
+</select>
+
+<select id="getTopPostsByCategory" parameterType="string" resultType="model.dto.PostDTO">
+  <![CDATA[
+    SELECT *
+    FROM (
+      SELECT * FROM posts
+      WHERE category = #{category}
+      ORDER BY view_count DESC
+    )
+    WHERE ROWNUM <= 3
+  ]]>
+</select>
+
+
+
+
+
+<select id="getPostById" parameterType="int" resultType="model.dto.PostDTO">
+    SELECT post_id, user_id, category, title, p_content, created_at, view_count
+    FROM posts
+    WHERE post_id = #{postId}
+</select>
+
+<update id="increaseViewCount" parameterType="int">
+    UPDATE posts
+    SET view_count = view_count + 1
+    WHERE post_id = #{postId}
+</update>
+
+
+<!-- 1. 좋아요 누르기 -->
+<insert id="addLike" parameterType="map">
+  INSERT INTO post_likes (post_id, user_id)
+  VALUES (#{postId}, #{userId})
+</insert>
+
+<!-- 2. 좋아요 수 조회 -->
+<select id="getLikeCount" parameterType="int" resultType="int">
+  SELECT like_count FROM posts WHERE post_id = #{postId}
+</select>
+
+
+<!-- 3. 내가 이미 좋아요 눌렀는지 확인 -->
+<select id="hasLiked" parameterType="map" resultType="int">
+  SELECT COUNT(*) FROM post_likes
+  WHERE post_id = #{postId} AND user_id = #{userId}
+</select>
+
+
+<!-- 4. 좋아요 수 증가 -->
+<update id="increaseLikeCount" parameterType="int">
+  UPDATE posts
+  SET like_count = like_count + 1
+  WHERE post_id = #{postId}
+</update>
+
+
+<!--  5. 좋아요 취소 -->
+<delete id="removeLike" parameterType="map">
+  DELETE FROM post_likes
+  WHERE post_id = #{postId} AND user_id = #{userId}
+</delete>
+
+<update id="decreaseLikeCount" parameterType="int">
+  UPDATE posts
+  SET like_count = like_count - 1
+  WHERE post_id = #{postId} AND like_count > 0
+</update>
+
+
+
+</mapper>

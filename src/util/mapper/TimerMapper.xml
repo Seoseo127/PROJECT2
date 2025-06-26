@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="TIMER">
+
+	<!-- 1. STUDY_TIMER 테이블의 CLEAR 컬럼을 현재 날짜로 업데이트 -->
+	<update id="updateStudyTimerClearDate" parameterType="map">
+		UPDATE STUDY_TIMER
+		SET CLEAR = SYSDATE <!-- Oracle DB를 사용한다면 SYSDATE, MySQL/PostgreSQL은 
+			NOW() 등을 사용 -->
+		WHERE USER_ID = #{userId} AND SUBJECT = #{subject}
+	</update>
+
+	<!-- 과목 리스트 -->
+	<select id="selectSubjectsByUserId" parameterType="string"
+		resultType="string">
+		SELECT DISTINCT SUBJECT FROM TODO_LIST WHERE USER_ID =
+		#{userId}
+	</select>
+
+	<!-- 과목별 목표시간/누적시간 함께 가져오기 -->
+	<select id="selectSubjectsWithTimeByUserId"
+		parameterType="string" resultType="map">
+		SELECT t.SUBJECT, s.TOTAL_MINUTES,
+		s.TOTAL
+		FROM TODO_LIST t
+		LEFT JOIN STUDY_TIMER s
+		ON t.USER_ID = s.USER_ID
+		AND t.SUBJECT = s.SUBJECT
+		WHERE t.USER_ID = #{userId}
+		GROUP BY
+		t.SUBJECT, s.TOTAL_MINUTES, s.TOTAL
+	</select>
+
+	<!-- 목표시간 저장 (MERGE 방식) -->
+	<insert id="insertOrUpdateGoalTime" parameterType="map">
+		MERGE INTO STUDY_TIMER t
+		USING (SELECT #{userId} AS USER_ID, #{subject}
+		AS SUBJECT FROM dual) s
+		ON (t.USER_ID = s.USER_ID AND t.SUBJECT =
+		s.SUBJECT)
+		WHEN MATCHED THEN
+		UPDATE SET TOTAL_MINUTES = #{totalMinutes}
+		WHEN NOT MATCHED THEN
+		INSERT (USER_ID, SUBJECT, TOTAL_MINUTES, TOTAL) <!-- 
+			✅ TOTAL 컬럼 추가 -->
+		VALUES (#{userId}, #{subject}, #{totalMinutes}, 0) <!-- ✅ TOTAL 초기값 0으로 
+			설정 -->
+	</insert>
+
+	<!-- 마감일이 오늘 또는 미래이고 가까운 순으로 정렬 -->
+	<select id="selectUpcomingTodos" parameterType="string"
+		resultType="map">
+		SELECT TODO_ID, SUBJECT, CONTENT, DEADLINE, STATUS
+		FROM
+		TODO_LIST
+		WHERE USER_ID = #{userId}
+		AND DEADLINE >= TRUNC(SYSDATE)
+		ORDER
+		BY DEADLINE ASC
+	</select>
+
+
+	<select id="selectSubjectsFutureSorted" parameterType="string"
+		resultType="map">
+		SELECT t.SUBJECT, t.DEADLINE, s.TOTAL_MINUTES, s.TOTAL, t.STATUS <!-- ✅ 
+			t.STATUS 추가 확인! -->
+		FROM TODO_LIST t
+		LEFT JOIN STUDY_TIMER s
+		ON t.USER_ID = s.USER_ID AND
+		t.SUBJECT = s.SUBJECT
+		WHERE t.USER_ID = #{userId}
+		AND t.DEADLINE >=
+		TRUNC(SYSDATE)
+		<!-- AND t.STATUS = '미완료' --> <!-- ✅ 이 조건은 제거하거나 주석 처리했는지 다시 확인! -->
+		ORDER BY t.DEADLINE ASC
+	</select>
+
+	<!-- ✅ 추가: 목표 시간 INSERT용 (insert 전 존재여부 확인용) -->
+	<select id="checkStudyTimerExists" parameterType="map"
+		resultType="int">
+		SELECT COUNT(*) FROM STUDY_TIMER
+		WHERE USER_ID = #{userId}
+		AND SUBJECT = #{subject}
+	</select>
+
+	<insert id="insertStudyTimer" parameterType="map">
+		INSERT INTO
+		STUDY_TIMER (USER_ID, SUBJECT, TOTAL_MINUTES)
+		VALUES (#{userId},
+		#{subject}, #{totalMinutes})
+	</insert>
+
+	<update id="updateStudyTimerMinutes" parameterType="map">
+		UPDATE
+		STUDY_TIMER
+		SET TOTAL_MINUTES = #{totalMinutes}
+		WHERE USER_ID =
+		#{userId} AND SUBJECT = #{subject}
+	</update>
+
+	<!-- 누적 시간 업데이트 -->
+	<update id="updateTotalMinutes" parameterType="map">
+		UPDATE STUDY_TIMER
+		SET TOTAL = #{total}
+		WHERE USER_ID = #{userId} AND SUBJECT = #{subject}
+	</update>
+
+	<!-- STUDY_TIMER에서 누적값 가져와서 TODO_LIST.TOTAL에 복사 -->
+	<update id="updateTodoTotalFromStudyTimer" parameterType="map">
+		UPDATE
+		TODO_LIST
+		SET TOTAL = (
+		SELECT TOTAL
+		FROM STUDY_TIMER
+		WHERE USER_ID =
+		#{userId}
+		AND SUBJECT = #{subject}
+		)
+		WHERE USER_ID = #{userId}
+		AND SUBJECT
+		= #{subject}
+	</update>
+
+	<update id="updateStatusToCompletedBySubject"
+		parameterType="map">
+		UPDATE TODO_LIST
+		SET STATUS = '완료'
+		WHERE USER_ID =
+		#{userId} AND SUBJECT = #{subject}
+	</update>
+
+	<select id="selectSubjectsWithTimeByUserId_gr"
+		parameterType="string" resultType="map">
+		SELECT SUBJECT, TOTAL_MINUTES, TOTAL
+		FROM STUDY_TIMER
+		WHERE USER_ID = #{userId}
+	</select>
+
+	<select id="selectTotalStudyMinutes" parameterType="String"
+		resultType="int">
+		SELECT COALESCE(SUM(TOTAL), 0)
+		FROM TODO_LIST
+		WHERE USER_ID =
+		#{userId}
+	</select>
+
+	<!-- 1. 화면에 출력될 SUBJECT만 가져오기 -->
+	<select id="selectSubjectNamesOnly" parameterType="String"
+		resultType="string">
+		SELECT SUBJECT
+		FROM TODO_LIST
+		WHERE USER_ID = #{userId}
+		AND
+		DEADLINE >= SYSDATE
+	</select>
+
+	<!-- 2. 해당 SUBJECT만 대상으로 TOTAL 합산 -->
+	<select id="selectTotalMinutesForSubjects" parameterType="map"
+		resultType="int">
+		SELECT COALESCE(SUM(TOTAL), 0)
+		FROM TODO_LIST
+		WHERE USER_ID = #{userId}
+		AND SUBJECT IN
+		<foreach item="subject" collection="subjects" open="("
+			separator="," close=")">
+			#{subject}
+		</foreach>
+	</select>
+	<select id="getGoalMinutes" parameterType="map" resultType="int">
+		SELECT TOTAL_MINUTES FROM STUDY_TIMER
+		WHERE USER_ID = #{userId} AND
+		SUBJECT = #{subject}
+	</select>
+
+	<update id="updateTotalAndClear" parameterType="map">
+		UPDATE
+		STUDY_TIMER
+		SET TOTAL = #{total},
+		CLEAR = #{clear,jdbcType=DATE}
+		WHERE
+		USER_ID = #{userId} AND SUBJECT = #{subject}
+	</update>
+
+	<select id="selectSubjectsWithTimeByUserIdFiltered"
+		parameterType="map" resultType="map">
+		SELECT t.SUBJECT, s.TOTAL_MINUTES, s.TOTAL
+		FROM TODO_LIST t
+		LEFT JOIN
+		STUDY_TIMER s ON t.USER_ID = s.USER_ID AND t.SUBJECT = s.SUBJECT
+		WHERE
+		t.USER_ID = #{userId}
+		AND t.SUBJECT IN
+		<foreach item="subject" collection="subjects" open="("
+			separator="," close=")">
+			#{subject}
+		</foreach>
+	</select>
+
+	<!-- STUDY_TIMER 테이블의 CLEAR 컬럼을 현재 날짜로 업데이트 (subject 기준) -->
+	<update id="updateStudyTimerClearDateBySubject"
+		parameterType="map">
+		UPDATE STUDY_TIMER
+		SET CLEAR = #{clearDate}
+		WHERE USER_ID = #{userId} AND SUBJECT = #{subject}
+	</update>
+
+</mapper>
