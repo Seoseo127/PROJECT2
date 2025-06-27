@@ -1,6 +1,5 @@
 package util;
 
-import java.io.IOException;
 import java.io.Reader;
 
 import org.apache.ibatis.io.Resources;
@@ -20,16 +19,22 @@ public class DBConnection {
         } catch (Exception e) {
             System.out.println("[DBConnection] 초기화 실패!!");
             e.printStackTrace();
-            throw new RuntimeException(e);  // 💥 이거 추가해줘서 오류를 바로 보이게
+            throw new RuntimeException(e);
         }
     }
 
+    // 기존 방식
     public static SqlSessionFactory getFactory() {
         return factory;
     }
 
-	public SqlSession getSession() {
-		  return factory.openSession();
-		// TODO Auto-generated method stub
-	}
+    // ✅ 세션 팩토리 리턴 (컨트롤러에서 사용 가능)
+    public static SqlSessionFactory getSqlSessionFactory() {
+        return factory;
+    }
+
+    // ✅ 간단 세션 열기용
+    public static SqlSession getSqlSession() {
+        return factory.openSession();
+    }
 }

@@ -71,13 +71,18 @@ public class UpdatePostController extends HttpServlet {
             File subFolder = new File(fullUploadPath);
             if (!subFolder.exists()) subFolder.mkdirs();
 
-            // 파일 이동
+         // 파일 이동
             File src = new File(baseUploadPath + File.separator + fileName);
             File dest = new File(subFolder, fileName);
             boolean moved = src.renameTo(dest);
             System.out.println("📂 파일 이동 성공 여부: " + moved);
-
-            filePath = "upload/" + subDir + "/" + fileName;
+            if (!moved) {
+                filePath = "upload/" + fileName;  // fallback 경로
+                subDir = "";
+                System.out.println("⚠️ 파일 이동 실패! 기본 upload 폴더 경로로 설정");
+            } else {
+                filePath = "upload/" + subDir + "/" + fileName;
+            }
         }
 
         // DTO 세팅
@@ -101,6 +106,7 @@ public class UpdatePostController extends HttpServlet {
             // 수정
             int postId = Integer.parseInt(postIdStr);
             post.setPostId(postId);
+            post.setCategory(category);
 
             // ✅ 새 파일이 없으면 기존 게시글의 filePath, fileType 유지
             if (filePath == null) {

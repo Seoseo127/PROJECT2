@@ -9,6 +9,7 @@ public class CommentDTO {
 	private String cContent;
 	private Date createdAt;
 	private String postTitle;
+	private String nickname;
 
 	public String getPostTitle() {
 		return postTitle;
@@ -57,5 +58,13 @@ public class CommentDTO {
 
 	public void setCreatedAt(Date createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public String getNickname() {
+		return nickname;
+	}
+
+	public void setNickname(String nickname) {
+		this.nickname = nickname;
 	}
 }

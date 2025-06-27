@@ -8,18 +8,23 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import model.dto.NotificationDTO;
 import model.dto.PostDTO;
 import model.dto.UserDTO;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+
+
 
 @WebServlet("/likePost")
 public class LikePostController extends HttpServlet {
     private final PostService postService = new PostService();
 
+    
+    
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -76,3 +81,8 @@ public class LikePostController extends HttpServlet {
         System.out.println("좋아요 누른 사람: " + userId);
     }
 }
+
+
+
+
+

@@ -10,6 +10,7 @@ public class PostDTO {
 	private String pContent;
 	private Date createdAt;
 	private int commentCount;
+	private String nickname;
 
 	private String filePath;
 	private String fileType;
@@ -17,6 +18,8 @@ public class PostDTO {
 	private int viewCount;
 	private int likeCount;
 
+	private Date scrapDate;
+	
 	// Getter & Setter
 	public int getPostId() {
 		return postId;
@@ -105,5 +108,19 @@ public class PostDTO {
 	public void setLikeCount(int likeCount) {
 	    this.likeCount = likeCount;
 	}
+	
+	public String getNickname() {
+	    return nickname;
+	}
+	public void setNickname(String nickname) {
+	    this.nickname = nickname;
+	}
 
+	public Date getScrapDate() {
+		return scrapDate;
+	}
+
+	public void setScrapDate(Date scrapDate) {
+		this.scrapDate = scrapDate;
+	}
 }

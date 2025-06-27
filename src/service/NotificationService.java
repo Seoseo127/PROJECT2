@@ -10,7 +10,7 @@ public class NotificationService {
     private final DBConnection db = new DBConnection();
 
     public void addNotification(NotificationDTO noti) {
-        SqlSession session = db.getSession();
+        SqlSession session = DBConnection.getSqlSession();
         try {
             session.insert("NotificationMapper.addNotification", noti);
             session.commit();
@@ -20,7 +20,7 @@ public class NotificationService {
     }
 
     public int getUnreadCount(String userId) {
-        SqlSession session = db.getSession();
+        SqlSession session = DBConnection.getSqlSession();
         int count = session.selectOne("NotificationMapper.getUnreadCount", userId);
         session.close();
         return count;
@@ -28,7 +28,7 @@ public class NotificationService {
 }
 
     public List<NotificationDTO> getNotificationsByUser(String userId) {
-        SqlSession session = db.getSession();
+        SqlSession session = DBConnection.getSqlSession();
         try {
             return session.selectList("NotificationMapper.getNotificationsByUser", userId);
         } finally {
@@ -37,7 +37,7 @@ public class NotificationService {
     }
 
     public void markAllAsRead(String userId) {
-        SqlSession session = db.getSession();
+        SqlSession session = DBConnection.getSqlSession();
         try {
             session.update("NotificationMapper.markAllAsRead", userId);
             session.commit();
@@ -47,7 +47,7 @@ public class NotificationService {
     }
     
     public void deleteNotification(int notiId) {
-        SqlSession session = db.getSession();
+        SqlSession session = DBConnection.getSqlSession();
         try {
             session.delete("NotificationMapper.deleteNotification", notiId);
             session.commit();
@@ -57,7 +57,7 @@ public class NotificationService {
     }
 
     public void markAsReadById(int notiId) {
-        SqlSession session = db.getSession();
+        SqlSession session = DBConnection.getSqlSession();
         session.update("NotificationMapper.markAsReadById", notiId);
         session.commit();
         session.close();

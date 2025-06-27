@@ -30,9 +30,8 @@ public class UserController extends HttpServlet {
 		UserDTO loginUser = (UserDTO) session.getAttribute("loginUser");
 
 		if (loginUser == null) {
-		    req.setAttribute("needLogin", true);
-		    req.getRequestDispatcher("/mypage.jsp").forward(req, resp);
-		    return;
+			resp.sendRedirect(req.getContextPath() + "/login.jsp?msg=needLogin");
+			return;
 		}
 
 		String userId = loginUser.getUserId();
@@ -42,9 +41,11 @@ public class UserController extends HttpServlet {
 
 		int postCount = postService.getMyPostCount(userId);
 		int commentCount = commentService.getMyCommentCount(userId);
+		int scrapCount = postService.getMyScrapCount(userId);
 
 		req.setAttribute("postCount", postCount);
 		req.setAttribute("commentCount", commentCount);
+		req.setAttribute("scrapCount", scrapCount);
 
 		req.getRequestDispatcher("/mypage.jsp").forward(req, resp);
 	}
@@ -108,7 +109,28 @@ public class UserController extends HttpServlet {
 				req.setAttribute("totalPages", totalPages);
 				req.getRequestDispatcher("/my_comment_list.jsp").forward(req, resp);
 				return;
+			} else if ("getMyScraps".equals(action)) {
+				int page = Integer.parseInt(req.getParameter("page"));
+				int size = 5;
+				int offset = (page - 1) * size;
+
+				Map<String, Object> map = new HashMap<>();
+				map.put("userId", loginUser.getUserId());
+				map.put("offset", offset);
+				map.put("limit", size);
+
+				List<PostDTO> scrapList = postService.getMyScrapPostsPaging(map);
+				int scrapCount = postService.getMyScrapCount(loginUser.getUserId());
+				int totalPages = (int) Math.ceil((double) scrapCount / size);
+
+				req.setAttribute("scrapList", scrapList);
+				req.setAttribute("currentPage", page);
+				req.setAttribute("totalPages", totalPages);
+
+				req.getRequestDispatcher("/my_scrap_list_partial.jsp").forward(req, resp);
 			}
+
+
 		}
 
 		// ✨ JSON 처리 (로그인/회원가입 등)

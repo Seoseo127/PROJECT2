@@ -1,4 +1,3 @@
-// PostService.java - 중복 제거 및 리팩토링 완료
 package service;
 
 import model.dto.PostDTO;
@@ -9,28 +8,22 @@ import java.util.*;
 
 public class PostService {
     private final static SqlSessionFactory factory = DBConnection.getFactory();
-
+    
+    
     
     public List<PostDTO> getTopPosts() {
-        SqlSession session = factory.openSession();
-        try {
+        try ( SqlSession session = factory.openSession()){
+   
             return session.selectList("postMapper.getTopPosts");
-        } finally {
-            session.close();
         }
     }
-    
     
     public List<PostDTO> getTopPostsByCategory(String category) {
-        SqlSession session = factory.openSession();
-        try {
+        try (SqlSession session = factory.openSession()){
             return session.selectList("postMapper.getTopPostsByCategory", category);
-        } finally {
-            session.close();
-        }
     }
-
-
+ }
+    
     public List<PostDTO> getAllPosts(String category, String keyword) {
         try (SqlSession session = factory.openSession()) {
             Map<String, Object> params = new HashMap<>();
@@ -173,5 +166,69 @@ public class PostService {
             return false;
         }
     }
+ // 🔹 스크랩 관련
+  	public void scrapPost(Map<String, Object> param) {
+  		try (SqlSession session = factory.openSession()) {
+  			session.insert("communityMapper.insertScrap", param);
+  			session.commit();
+  		}
+  	}
 
-}
+  	public void unscrapPost(Map<String, Object> param) {
+  		try (SqlSession session = factory.openSession()) {
+  			session.delete("communityMapper.deleteScrap", param);
+  			session.commit();
+  		}
+  	}
+
+  	public boolean isScrapped(Map<String, Object> param) {
+  		try (SqlSession session = factory.openSession()) {
+  			int count = session.selectOne("communityMapper.checkScrapExists", param);
+  			return count > 0;
+  		}
+  	}
+
+  	public List<PostDTO> getMyScrapPosts(String userId) {
+  		try (SqlSession session = factory.openSession()) {
+  			return session.selectList("communityMapper.selectScrapPosts", userId);
+  		}
+  	}
+
+  	public int getMyScrapCount(String userId) {
+  		try (SqlSession session = factory.openSession()) {
+  			return session.selectOne("communityMapper.getMyScrapCount", userId);
+  		}
+  	}
+
+  	public List<PostDTO> getMyScrapPostsPaging(Map<String, Object> param) {
+  		try (SqlSession session = factory.openSession()) {
+  			return session.selectList("communityMapper.getMyScrapPostsPaging", param);
+  		}
+  	}
+  	
+  	public List<PostDTO> getPostsByCategories(List<String> categories, String keyword, int offset, int limit) {
+  	    try (SqlSession session = factory.openSession()) {
+  	        Map<String, Object> params = new HashMap<>();
+  	        params.put("categories", categories); // 이 이름이 중요!
+  	        params.put("keyword", keyword);
+  	        params.put("offset", offset);
+  	        params.put("limit", limit);
+  	        return session.selectList("postMapper.selectByCategoriesWithKeyword", params);
+  	    }
+  	}
+
+  	
+  	
+  	public int getTotalPostCountByCategories(List<String> categories, String keyword) {
+  	    try (SqlSession session = factory.openSession()) {
+  	        Map<String, Object> params = new HashMap<>();
+  	        params.put("categories", categories);
+  	        params.put("keyword", keyword);
+  	        return session.selectOne("postMapper.countByCategoriesWithKeyword", params);
+  	    }
+  	}
+
+  	
+  }
+
+

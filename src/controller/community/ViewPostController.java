@@ -1,4 +1,3 @@
-// ViewPostController.java - 좋아요 상태까지 반영된 게시글 보기
 package controller.community;
 
 import model.dto.*;
@@ -33,7 +32,6 @@ public class ViewPostController extends HttpServlet {
             }
         }
 
-        // ✅ 조회수 증가 (좋아요 리다이렉트 제외)
         boolean noCount = "true".equals(request.getParameter("noCount"));
         if (!noCount) {
             postService.increaseViewCount(postId);
@@ -41,6 +39,14 @@ public class ViewPostController extends HttpServlet {
 
         // ✅ 게시글 불러오기
         PostDTO post = postService.getPostById(postId);
+
+        // ✅ 게시글이 null인 경우 404 처리
+        if (post == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "해당 게시글을 찾을 수 없습니다.");
+            return;
+        }
+
+        // ✅ 줄바꿈 처리
         if (post.getpContent() != null) {
             String content = post.getpContent().replace("\\n", "\n");
             post.setpContent(content.replace("\n", "<br/>"));
@@ -56,6 +62,7 @@ public class ViewPostController extends HttpServlet {
 
         // ✅ 좋아요 여부
         int hasLiked = 0;
+        boolean hasScrapped = false;
         if (userId != null) {
             Map<String, Object> param = new HashMap<>();
             param.put("postId", postId);
@@ -67,6 +74,7 @@ public class ViewPostController extends HttpServlet {
         request.setAttribute("post", post);
         request.setAttribute("commentList", comments);
         request.setAttribute("hasLiked", hasLiked);
+        request.setAttribute("hasScrapped", hasScrapped);
 
         request.getRequestDispatcher("viewPost.jsp").forward(request, response);
     }

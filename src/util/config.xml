@@ -10,6 +10,8 @@
 	</settings>
 
 
+
+
 	<environments default="development">
 		<environment id="development">
 			<transactionManager type="JDBC" />
@@ -23,17 +25,17 @@
 		</environment>
 	</environments>
 
-<mappers>
-  <mapper resource="util/mapper/PostMapper.xml" /> 
-  <mapper resource="util/mapper/CommentMapper.xml"/>
-  <mapper resource="util/mapper/FeedbackMapper.xml"/>
-  <mapper resource="util/mapper/communityMapper.xml"/>
-  <mapper resource="util/mapper/StudyGroupMapper.xml"/>
-  <mapper resource="util/mapper/TimerMapper.xml"/>
-  <mapper resource="util/mapper/TodoMapper.xml"/>
-  <mapper resource="util/mapper/UserMapper.xml"/>
-  <mapper resource="util/mapper/NotificationMapper.xml"/>
-</mappers>
+	<mappers>
+		<mapper resource="util/mapper/PostMapper.xml" />
+		<mapper resource="util/mapper/CommentMapper.xml" />
+		<mapper resource="util/mapper/FeedbackMapper.xml" />
+		<mapper resource="util/mapper/communityMapper.xml" />
+		<mapper resource="util/mapper/StudyGroupMapper.xml" />
+		<mapper resource="util/mapper/TimerMapper.xml" />
+		<mapper resource="util/mapper/TodoMapper.xml" />
+		<mapper resource="util/mapper/UserMapper.xml" />
+		<mapper resource="util/mapper/NotificationMapper.xml"/>
+	</mappers>
 
 
 

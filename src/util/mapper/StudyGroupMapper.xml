@@ -1,6 +1,271 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="PROJECT_2">
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="model.dao.StudyGroupMapper">
+
+	<resultMap id="studyGroupResultMap"
+		type="model.dto.StudyGroupDTO">
+		<result property="groupId" column="group_id" />
+		<result property="name" column="name" />
+		<result property="description" column="description" />
+		<result property="duration" column="duration" />
+		<result property="leaderId" column="leader_id" />
+		<result property="leaderNickname" column="leader_nickname" />
+	</resultMap>
+
+
+	<!-- 전체 스터디 그룹 조회 (종료 상태 포함) -->
+	<select id="getAllStudyGroups"
+		resultType="model.dto.StudyGroupDTO">
+		SELECT
+		GROUP_ID AS groupId,
+		NAME AS name,
+		LEADER_ID AS
+		leaderId,
+		CREATED_AT AS createdAt,
+		DURATION AS duration,
+		DESCRIPTION AS
+		description,
+		MAX_MEMBER AS maxMember,
+		TO_CHAR(CREATED_AT + DURATION) AS
+		endDate,
+		CASE
+		WHEN (CREATED_AT + DURATION) &lt; SYSDATE THEN '종료됨'
+		ELSE
+		'모집 중'
+		END AS status
+		FROM STUDY_GROUP
+		ORDER BY GROUP_ID DESC
+	</select>
+
+
+	<!-- 전체 스터디 그룹 조회 (간단 조회) -->
+	<select id="selectAllStudyGroups"
+		resultType="model.dto.StudyGroupDTO">
+		SELECT * FROM STUDY_GROUP
+	</select>
+
+	<!-- 그룹 상세 조회 -->
+	<select id="getGroupById" parameterType="int"
+		resultType="model.dto.StudyGroupDTO">
+
+		SELECT
+		GROUP_ID AS groupId,
+		NAME AS name,
+		LEADER_ID AS
+		leaderId,
+		TO_CHAR(CREATED_AT, 'YYYY-MM-DD') AS createdAt,
+		DURATION AS
+		duration,
+		DESCRIPTION AS description,
+		MAX_MEMBER AS maxMember
+		FROM
+		STUDY_GROUP
+		WHERE GROUP_ID = #{groupId}
+	</select>
+
+	<!-- 그룹 상세 조회 (간단) -->
+	<select id="selectStudyGroupById" parameterType="int"
+		resultType="model.dto.StudyGroupDTO">
+		SELECT * FROM STUDY_GROUP WHERE GROUP_ID = #{groupId}
+	</select>
+
+	<!-- 그룹 생성 (시퀀스 사용) -->
+	<insert id="insertStudyGroup"
+		parameterType="model.dto.StudyGroupDTO">
+		INSERT INTO STUDY_GROUP (
+		GROUP_ID, NAME, LEADER_ID,
+		CREATED_AT, DURATION, DESCRIPTION, MAX_MEMBER
+		) VALUES (
+		STUDY_GROUP_SEQ.NEXTVAL,
+		#{name}, #{leaderId}, SYSDATE, #{duration},
+		#{description}, #{maxMember}
+		)
+	</insert>
+
+	<!-- 그룹 생성 (수동 GROUP_ID 입력용, 간단) -->
+	<insert id="insertStudyGroupManual"
+		parameterType="model.dto.StudyGroupDTO">
+		INSERT INTO STUDY_GROUP (GROUP_ID, NAME, LEADER_ID,
+		CREATED_AT, DURATION)
+		VALUES (#{groupId}, #{name}, #{leaderId},
+		SYSDATE, #{duration})
+	</insert>
+
+	<!-- 그룹 정보 수정 -->
+	<update id="updateGroup" parameterType="model.dto.StudyGroupDTO">
+		UPDATE STUDY_GROUP
+		SET
+		NAME = #{name},
+		LEADER_ID = #{leaderId},
+		DURATION = #{duration},
+		DESCRIPTION = #{description}
+		WHERE GROUP_ID = #{groupId}
+	</update>
+
+	<!-- 그룹 정보 수정 (간단) -->
+	<update id="updateStudyGroup"
+		parameterType="model.dto.StudyGroupDTO">
+		UPDATE STUDY_GROUP
+		SET NAME = #{name}, DURATION =
+		#{duration}
+		WHERE GROUP_ID = #{groupId}
+	</update>
+
+	<!-- 그룹 기간만 수정 -->
+	<update id="updateDuration"
+		parameterType="model.dto.StudyGroupDTO">
+		UPDATE STUDY_GROUP
+		SET DURATION = #{duration}
+		WHERE
+		GROUP_ID = #{groupId}
+	</update>
+
+	<!-- 내가 만든 스터디 목록 -->
+	<select id="selectGroupsLedByUser" parameterType="string"
+		resultType="model.dto.StudyGroupDTO">
+		SELECT
+		GROUP_ID AS groupId,
+		NAME AS name,
+		LEADER_ID AS
+		leaderId,
+		TO_CHAR(CREATED_AT, 'YYYY-MM-DD') AS createdAt,
+		DURATION AS
+		duration,
+		DESCRIPTION AS description,
+		MAX_MEMBER AS maxMember
+		FROM
+		STUDY_GROUP
+		WHERE LEADER_ID = #{userId}
+	</select>
+
+	<!-- 내가 가입한 스터디 목록 -->
+	<select id="selectGroupById"
+        parameterType="int" resultMap="studyGroupResultMap">
+    SELECT sg.*, u.nickname AS leader_nickname
+    FROM study_group sg
+    JOIN users u ON sg.leader_id = u.user_id
+    WHERE sg.group_id = #{groupId}
+	</select>
+
+
+
+	<!-- 내가 가입한 스터디 상세 -->
+	<select id="selectGroupsJoinedByUser"
+		resultType="model.dto.StudyGroupDTO">
+		SELECT
+		G.GROUP_ID AS groupId,
+		G.NAME AS name,
+		G.LEADER_ID AS
+		leaderId,
+		TO_CHAR(G.CREATED_AT, 'YYYY-MM-DD HH24:MI:SS') AS createdAt,
+		G.DURATION AS duration,
+		G.DESCRIPTION AS description,
+		G.MAX_MEMBER AS
+		maxMember,
+		TO_CHAR(G.CREATED_AT + G.DURATION) AS endDate
+		FROM
+		STUDY_GROUP G
+		JOIN STUDY_MEMBER M ON G.GROUP_ID = M.GROUP_ID
+		WHERE
+		M.USER_ID = #{userId}
+	</select>
+
+	<select id="selectMembersByGroupId" parameterType="int"
+		resultType="model.dto.StudyMemberDTO">
+		SELECT sm.*, u.nickname
+		FROM study_member sm
+		JOIN users u ON
+		sm.user_id = u.user_id
+		WHERE sm.group_id = #{groupId}
+	</select>
+
+
+
+
+	<!-- 특정 그룹의 특정 유저 -->
+	<select id="selectMember" parameterType="map"
+		resultType="model.dto.StudyMemberDTO">
+		SELECT
+		GROUP_ID AS groupId,
+		USER_ID AS userId,
+		JOIN_DATE AS
+		joinedAt
+		FROM STUDY_MEMBER
+		WHERE GROUP_ID = #{groupId} AND USER_ID =
+		#{userId}
+	</select>
+
+	<!-- 스터디 참여 -->
+	<insert id="insertMember"
+		parameterType="model.dto.StudyMemberDTO">
+		INSERT INTO STUDY_MEMBER (GROUP_ID, USER_ID, JOIN_DATE)
+		VALUES (#{groupId}, #{userId}, SYSDATE)
+	</insert>
+
+	<!-- 스터디 탈퇴 -->
+	<delete id="leaveGroup">
+		DELETE FROM STUDY_MEMBER WHERE GROUP_ID = #{groupId}
+		AND USER_ID = #{userId}
+	</delete>
+
+
+	<!-- 강제탈퇴 -->
+	<delete id="kickMember" parameterType="map">
+		DELETE FROM STUDY_MEMBER
+		WHERE GROUP_ID = #{groupId} AND USER_ID = #{userId}
+	</delete>
+
+	<!-- 그룹 삭제 -->
+	<delete id="deleteGroup" parameterType="int">
+		DELETE FROM STUDY_GROUP
+		WHERE GROUP_ID = #{groupId}
+	</delete>
+
+	<!-- 그룹 삭제 (간단) -->
+	<delete id="deleteStudyGroup" parameterType="int">
+		DELETE FROM
+		STUDY_GROUP WHERE GROUP_ID = #{groupId}
+	</delete>
+
+
+	<!-- 그룹장이 그룹삭제 -->
+	<delete id="deleteGroupByLeader" parameterType="map">
+		DELETE FROM
+		STUDY_GROUP
+		WHERE GROUP_ID = #{groupId}
+		AND LEADER_ID = #{leaderId}
+	</delete>
+
+
+
+	<!-- 그룹 단일 조회 (createdAt + endDate 포함) -->
+	<select id="getStudyGroupById" parameterType="int"
+		resultType="model.dto.StudyGroupDTO">
+		SELECT
+		GROUP_ID AS groupId,
+		NAME AS name,
+		LEADER_ID AS
+		leaderId,
+		TO_CHAR(CREATED_AT, 'YYYY-MM-DD') AS createdAt,
+		DURATION AS
+		duration,
+		DESCRIPTION AS description,
+		MAX_MEMBER AS maxMember,
+		TO_CHAR(CREATED_AT + DURATION) AS endDate
+		FROM STUDY_GROUP
+		WHERE
+		GROUP_ID = #{groupId}
+	</select>
+
+	<!-- 현재 그룹 인원 수 -->
+	<select id="countMembers" resultType="int" parameterType="int">
+		SELECT
+		COUNT(*) FROM STUDY_MEMBER WHERE GROUP_ID = #{groupId}
+	</select>
+
+
+
 </mapper>
